@@ -1,0 +1,30 @@
+version: '3'
+services:
+  jaeger-query:
+    image: jaegertracing/jaeger-query:1.35
+    environment:
+      SPAN_STORAGE_TYPE: cassandra
+      CASSANDRA_KEYSPACE: jaeger_v1_dc1
+      CASSANDRA_SERVERS: <cassandra-server-ip>
+    ports:
+      - '16686:16686'
+
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector:1.35
+    environment:
+      SPAN_STORAGE_TYPE: cassandra
+      CASSANDRA_KEYSPACE: jaeger_v1_dc1
+      CASSANDRA_SERVERS: <cassandra-server-ip>
+    ports:
+      - '14250:14250'
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ['--config=/etc/otel-collector-config.yaml']
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - '4317:4317' # gRPC receiver
+    depends_on:
+      - jaeger-collector
+      - jaeger-query
